@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luxora Shop</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+
+body{
+background:#0f0f23;
+color:#fff;
+overflow-x:hidden;
+}
+
+header{
+position:sticky;
+top:0;
+background:#14142b;
+padding:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+z-index:10;
+}
+
+.logo{
+font-size:22px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.search input{
+padding:10px;
+border-radius:10px;
+border:none;
+outline:none;
+}
+
+.products{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
+padding:20px;
+}
+
+.card{
+background:#1c1c3a;
+border-radius:15px;
+overflow:hidden;
+cursor:pointer;
+transition:0.3s;
+}
+
+.card:hover{transform:scale(1.05)}
+
+.card img{
+width:100%;
+height:200px;
+object-fit:cover;
+}
+
+.info{padding:10px}
+
+.price{color:#8b5cf6;font-weight:bold}
+
+/* POPUP */
+.popup{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.8);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.popup-box{
+background:#1c1c3a;
+padding:20px;
+border-radius:15px;
+width:300px;
+text-align:center;
+}
+
+/* ADMIN BUTTON */
+.admin-btn{
+position:fixed;
+bottom:20px;
+left:20px;
+background:#8b5cf6;
+padding:12px 15px;
+border-radius:12px;
+cursor:pointer;
+font-weight:bold;
+}
+
+/* ADMIN PANEL */
+.panel{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.9);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.panel-box{
+background:#1c1c3a;
+padding:20px;
+border-radius:15px;
+width:320px;
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin:5px 0;
+border-radius:8px;
+border:none;
+outline:none;
+}
+
+button{
+padding:10px;
+width:100%;
+margin-top:10px;
+background:#8b5cf6;
+color:#fff;
+border:none;
+cursor:pointer;
+border-radius:8px;
+}
+
+.preview{
+display:flex;
+gap:5px;
+flex-wrap:wrap;
+margin-top:10px;
+}
+
+.preview img, .preview video{
+width:60px;
+height:60px;
+object-fit:cover;
+border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="logo" id="logo">Luxora</div>
+<div class="search"><input id="search" placeholder="بحث..."></div>
+</header>
+
+<div class="products" id="products"></div>
+
+<!-- POPUP -->
+<div class="popup" id="popup">
+<div class="popup-box">
+<h3 id="pname"></h3>
+<p id="pprice"></p>
+<button onclick="closePopup()">Close</button>
+</div>
+</div>
+
+<!-- ADMIN BUTTON -->
+<div class="admin-btn" onclick="openAdmin()">⚙ Admin</div>
+
+<!-- ADMIN PANEL -->
+<div class="panel" id="panel">
+<div class="panel-box">
+
+<h3>لوحة التحكم</h3>
+
+<input id="name" placeholder="اسم المنتج">
+<input id="price" placeholder="الثمن (€)">
+<select id="cat">
+<option>shoes</option>
+<option>clothes</option>
+<option>watches</option>
+</select>
+
+<input type="file" id="file" multiple accept="image/*,video/*">
+
+<div class="preview" id="preview"></div>
+
+<button onclick="add()">إضافة المنتج</button>
+<button onclick="closeAdmin()">إغلاق</button>
+
+</div>
+</div>
+
+<script>
+
+let products = JSON.parse(localStorage.getItem("p")) || [];
+let filesStore = [];
+
+/* render */
+function render(){
+let box = document.getElementById("products");
+box.innerHTML="";
+
+products.forEach((p,i)=>{
+box.innerHTML+=`
+<div class="card" onclick="openP(${i})">
+<img src="${p.media[0]}">
+<div class="info">
+<h3>${p.name}</h3>
+<p class="price">${p.price} €</p>
+</div>
+</div>`;
+});
+}
+render();
+
+/* preview files */
+document.getElementById("file").addEventListener("change",function(e){
+let preview = document.getElementById("preview");
+preview.innerHTML="";
+filesStore = [];
+
+for(let f of e.target.files){
+let reader = new FileReader();
+
+reader.onload = function(ev){
+filesStore.push(ev.target.result);
+
+if(f.type.includes("video")){
+preview.innerHTML += `<video src="${ev.target.result}" controls></video>`;
+}else{
+preview.innerHTML += `<img src="${ev.target.result}">`;
+}
+}
+
+reader.readAsDataURL(f);
+}
+});
+
+/* add product */
+function add(){
+let name = document.getElementById("name").value;
+let price = document.getElementById("price").value;
+let cat = document.getElementById("cat").value;
+
+if(!name || !price || filesStore.length===0){
+alert("دخل جميع المعلومات");
+return;
+}
+
+products.push({
+name:name,
+price:price,
+cat:cat,
+media:filesStore
+});
+
+localStorage.setItem("p",JSON.stringify(products));
+
+render();
+closeAdmin();
+}
+
+/* popup */
+function openP(i){
+document.getElementById("popup").style.display="flex";
+document.getElementById("pname").innerText=products[i].name;
+document.getElementById("pprice").innerText=products[i].price+" €";
+}
+
+function closePopup(){
+document.getElementById("popup").style.display="none";
+}
+
+/* admin */
+function openAdmin(){
+let pass = prompt("Password:");
+if(pass==="200911"){
+document.getElementById("panel").style.display="flex";
+}else{
+alert("كلمة السر خطأ");
+}
+}
+
+function closeAdmin(){
+document.getElementById("panel").style.display="none";
+}
+
+</script>
+
+</body>
+</html>
