@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🛍 ALDO SHOP - المتجر الرسمي</title>
+
+<style>
+/* نفس CSS ديالك بلا تغيير */
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:linear-gradient(135deg,#0c0c0c 0%,#1a1a2e 50%,#16213e 100%);color:#fff;min-height:100vh;overflow-x:hidden;}
+.container{max-width:1400px;margin:0 auto;padding:0 15px;}
+header{background:linear-gradient(135deg,#ff4757,#ff6b7a);padding:20px 0;position:sticky;top:0;z-index:1000;}
+.header-content{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;}
+.logo{font-size:2.2em;font-weight:800;cursor:pointer;}
+.search-box input{width:100%;padding:12px;border-radius:25px;border:none;}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:25px;padding:30px 0;}
+.product-card{background:#1a1a2e;border-radius:20px;overflow:hidden;cursor:pointer;}
+.media-container{height:220px;overflow:hidden;}
+.media-container img,video{width:100%;height:100%;object-fit:cover;}
+.info{text-align:center;padding:20px;}
+.buy-btn{padding:10px;background:#25D366;border:none;color:#fff;border-radius:10px;cursor:pointer;}
+.popup-overlay,.admin-overlay,.pass-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#000d;justify-content:center;align-items:center;z-index:9999;}
+.popup-content,.admin-container,.pass-container{background:#1a1a2e;padding:20px;border-radius:20px;}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<div class="header-content">
+<div class="logo">🛍 ALDO SHOP</div>
+<div class="search-box">
+<input type="text" id="searchInput" placeholder="🔍 ابحث..." onkeyup="searchProducts()">
+</div>
+</div>
+</header>
+
+<div class="products" id="products"></div>
+</div>
+
+<div class="popup-overlay" id="popup"><div class="popup-content" id="popupContent"></div></div>
+
+<div class="pass-overlay" id="passBox">
+<div class="pass-container">
+<h3>🔐 كلمة السر</h3>
+<input type="password" id="pass">
+<button onclick="checkPass()">دخول</button>
+</div>
+</div>
+
+<div class="admin-overlay" id="adminBox">
+<div class="admin-container">
+<h2>لوحة التحكم</h2>
+<input id="name" placeholder="اسم المنتج"><br><br>
+<input id="price" type="number" placeholder="الثمن €"><br><br>
+<select id="category">
+<option value="shoes">👟</option>
+<option value="clothes">👕</option>
+<option value="watches">⌚</option>
+</select><br><br>
+<input type="file" id="mediaInput" multiple accept="image/*,video/*"><br><br>
+<button onclick="addProduct()">➕ إضافة</button>
+<br><br>
+<button onclick="closeAdmin()">❌ خروج</button>
+</div>
+</div>
+
+<script>
+let products = JSON.parse(localStorage.getItem("products")) || [];
+let secretClicks = 0;
+
+/* فتح سري بعد 10 ضغطات */
+document.querySelector(".logo").addEventListener("click", () => {
+    secretClicks++;
+    if(secretClicks >= 10){
+        document.getElementById("passBox").style.display = "flex";
+        secretClicks = 0;
+    }
+    setTimeout(()=>secretClicks=0,3000);
+});
+
+function checkPass(){
+    if(document.getElementById("pass").value === "200911"){
+        passBox.style.display = "none";
+        adminBox.style.display = "flex";
+    } else alert("❌ خطأ");
+}
+
+function closeAdmin(){adminBox.style.display="none";}
+
+function save(){localStorage.setItem("products",JSON.stringify(products));}
+
+function addProduct(){
+    let name = nameInput.value;
+    let price = priceInput.value;
+    let category = category.value;
+    let files = mediaInput.files;
+
+    if(!name || !price) return alert("عمر البيانات");
+
+    let mediaArr=[];
+    let promises=[];
+
+    for(let file of files){
+        let reader=new FileReader();
+        let p=new Promise(res=>{
+            reader.onload=e=>{
+                mediaArr.push({
+                    src:e.target.result,
+                    type:file.type.startsWith("video")?"video":"image"
+                });
+                res();
+            };
+        });
+        reader.readAsDataURL(file);
+        promises.push(p);
+    }
+
+    Promise.all(promises).then(()=>{
+        products.push({name,price,category,media:mediaArr});
+        save();
+        render();
+        alert("تمت الإضافة");
+    });
+}
+
+function render(){
+    let html="";
+    products.forEach((p,i)=>{
+        let m=p.media[0];
+        html+=`<div class="product-card" onclick="openProduct(${i})">
+        <div class="media-container">
+        ${m.type=="video"?`<video src="${m.src}"></video>`:`<img src="${m.src}">`}
+        </div>
+        <div class="info"><h3>${p.name}</h3><p>${p.price}€</p></div>
+        </div>`;
+    });
+    productsEl.innerHTML=html;
+}
+
+function openProduct(i){
+    let p=products[i];
+    popupContent.innerHTML=`<h2>${p.name}</h2><p>${p.price}€</p>`;
+    popup.style.display="flex";
+}
+
+function searchProducts(){
+    let q=searchInput.value.toLowerCase();
+    let filtered=products.filter(p=>p.name.toLowerCase().includes(q));
+    productsEl.innerHTML="";
+    filtered.forEach((p,i)=>{
+        let m=p.media[0];
+        productsEl.innerHTML+=`<div class="product-card" onclick="openProduct(${i})">
+        ${m.type=="video"?`<video src="${m.src}"></video>`:`<img src="${m.src}">`}
+        <div class="info"><h3>${p.name}</h3><p>${p.price}€</p></div></div>`;
+    });
+}
+
+render();
+</script>
+</body>
+</html>
