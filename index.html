@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luxury Store</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+
+body{
+background:#0f0f23;
+color:#fff;
+min-height:100vh;
+}
+
+/* HEADER */
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px;
+background:#14142b;
+position:sticky;
+top:0;
+z-index:1000;
+}
+
+.logo{
+font-size:22px;
+font-weight:bold;
+cursor:pointer;
+color:#8b5cf6;
+}
+
+/* CATEGORIES */
+.cats{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+justify-content:center;
+padding:15px;
+}
+
+.cats button{
+padding:10px 15px;
+border:none;
+border-radius:20px;
+background:#222;
+color:#fff;
+cursor:pointer;
+}
+
+.cats button.active{
+background:#8b5cf6;
+}
+
+/* GRID 4 PRODUCTS PER ROW */
+.products{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:12px;
+padding:20px;
+}
+
+@media(max-width:900px){
+.products{grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:500px){
+.products{grid-template-columns:repeat(1,1fr);}
+}
+
+/* CARD (P STYLE) */
+.card{
+background:#1c1c3a;
+border-radius:12px;
+overflow:hidden;
+text-align:center;
+cursor:pointer;
+transition:0.3s;
+}
+
+.card:hover{transform:scale(1.05)}
+
+.card img,.card video{
+width:100%;
+height:140px;
+object-fit:cover;
+}
+
+.card h4{padding:8px}
+.price{color:#8b5cf6;font-weight:bold}
+
+/* POPUP PRODUCT */
+.popup{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.9);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.popup-box{
+background:#1c1c3a;
+padding:20px;
+border-radius:12px;
+width:90%;
+max-width:400px;
+text-align:center;
+}
+
+/* ADMIN BUTTON */
+.admin-btn{
+position:fixed;
+bottom:20px;
+left:20px;
+background:#8b5cf6;
+padding:12px;
+border-radius:10px;
+cursor:pointer;
+}
+
+/* PANEL */
+.panel{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.9);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.panel-box{
+background:#1c1c3a;
+padding:20px;
+border-radius:12px;
+width:90%;
+max-width:500px;
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin:5px 0;
+}
+
+button{
+width:100%;
+padding:10px;
+margin-top:10px;
+background:#8b5cf6;
+color:#fff;
+border:none;
+cursor:pointer;
+}
+
+/* ADMIN LIST */
+.list{
+margin-top:10px;
+max-height:200px;
+overflow:auto;
+}
+
+.item{
+display:flex;
+justify-content:space-between;
+align-items:center;
+background:#2a2a55;
+padding:5px;
+margin:5px 0;
+border-radius:8px;
+}
+
+.item button{
+width:auto;
+padding:5px 10px;
+background:red;
+}
+
+/* WHATSAPP */
+.wa{
+position:fixed;
+right:20px;
+bottom:20px;
+background:#25D366;
+width:60px;
+height:60px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:26px;
+color:#fff;
+text-decoration:none;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="logo" id="logo">Luxury Store</div>
+</header>
+
+<!-- CATEGORIES -->
+<div class="cats">
+<button class="active" onclick="filter('all')">الكل</button>
+<button onclick="filter('shoes')">أحذية</button>
+<button onclick="filter('clothes')">ملابس</button>
+<button onclick="filter('perfume')">عطور</button>
+<button onclick="filter('acc')">إكسسوارات</button>
+</div>
+
+<!-- PRODUCTS -->
+<div class="products" id="products"></div>
+
+<!-- PRODUCT POPUP -->
+<div class="popup" id="popup">
+<div class="popup-box">
+<h3 id="ppName"></h3>
+<img id="ppImg" style="width:100%;border-radius:10px;">
+<p id="ppPrice"></p>
+<button onclick="closeP()">إغلاق</button>
+</div>
+</div>
+
+<!-- ADMIN BUTTON -->
+<div class="admin-btn" onclick="openAdmin()">⚙</div>
+
+<!-- ADMIN PANEL -->
+<div class="panel" id="panel">
+<div class="panel-box">
+
+<h3>Admin Panel</h3>
+
+<input id="name" placeholder="اسم المنتج">
+<input id="price" placeholder="السعر">
+<select id="cat">
+<option value="shoes">أحذية</option>
+<option value="clothes">ملابس</option>
+<option value="perfume">عطور</option>
+<option value="acc">إكسسوارات</option>
+</select>
+
+<input type="file" id="file" multiple>
+
+<button onclick="add()">إضافة منتج</button>
+
+<h4>حذف المنتجات</h4>
+<div class="list" id="list"></div>
+
+<button onclick="closeAdmin()">إغلاق</button>
+
+</div>
+</div>
+
+<!-- WHATSAPP -->
+<a class="wa" href="https://wa.me/393510798667">💬</a>
+
+<script>
+
+let products = JSON.parse(localStorage.getItem("p")) || [];
+let clicks = 0;
+let current = "all";
+
+/* SECRET ADMIN */
+document.getElementById("logo").onclick = ()=>{
+clicks++;
+setTimeout(()=>clicks=0,3000);
+if(clicks===10){
+openAdmin();
+clicks=0;
+}
+};
+
+/* FILTER */
+function filter(c){
+current = c;
+render();
+}
+
+/* RENDER */
+function render(){
+let box=document.getElementById("products");
+box.innerHTML="";
+
+products
+.filter(p=>current==="all"||p.cat===current)
+.forEach((p,i)=>{
+
+box.innerHTML+=`
+<div class="card" onclick="openProduct(${i})">
+<img src="${p.media[0]}">
+<h4>${p.name}</h4>
+<p class="price">${p.price} €</p>
+</div>`;
+});
+
+renderList();
+}
+
+/* OPEN PRODUCT */
+function openProduct(i){
+let p=products[i];
+document.getElementById("popup").style.display="flex";
+document.getElementById("ppName").innerText=p.name;
+document.getElementById("ppPrice").innerText=p.price+" €";
+document.getElementById("ppImg").src=p.media[0];
+}
+
+function closeP(){
+document.getElementById("popup").style.display="none";
+}
+
+/* ADD PRODUCT */
+function add(){
+let name=document.getElementById("name").value;
+let price=document.getElementById("price").value;
+let cat=document.getElementById("cat").value;
+let files=document.getElementById("file").files;
+
+let media=[];
+let done=0;
+
+for(let i=0;i<files.length;i++){
+let r=new FileReader();
+
+r.onload=e=>{
+media.push(e.target.result);
+done++;
+
+if(done===files.length){
+products.push({name,price,cat,media});
+localStorage.setItem("p",JSON.stringify(products));
+render();
+}
+};
+
+r.readAsDataURL(files[i]);
+}
+}
+
+/* ADMIN LIST */
+function renderList(){
+let list=document.getElementById("list");
+list.innerHTML="";
+
+products.forEach((p,i)=>{
+list.innerHTML+=`
+<div class="item">
+<span>${p.name}</span>
+<button onclick="del(${i})">حذف</button>
+</div>`;
+});
+}
+
+/* DELETE */
+function del(i){
+products.splice(i,1);
+localStorage.setItem("p",JSON.stringify(products));
+render();
+}
+
+/* ADMIN */
+function openAdmin(){
+let pass=prompt("Password:");
+if(pass==="200911"){
+document.getElementById("panel").style.display="flex";
+renderList();
+}else alert("خطأ");
+}
+
+function closeAdmin(){
+document.getElementById("panel").style.display="none";
+}
+
+render();
+
+</script>
+
+</body>
+</html>
