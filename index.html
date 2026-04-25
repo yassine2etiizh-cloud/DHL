@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luxora Shop</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+
+body{
+background:#0f0f23;
+color:#fff;
+}
+
+/* HEADER */
+header{
+position:sticky;
+top:0;
+background:#14142b;
+padding:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.logo{
+font-size:22px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.search input{
+padding:10px;
+border-radius:10px;
+border:none;
+outline:none;
+}
+
+/* GRID 4 PRODUCTS */
+.products{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:10px;
+padding:10px;
+}
+
+@media(max-width:900px){
+.products{grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:500px){
+.products{grid-template-columns:repeat(1,1fr);}
+}
+
+.card{
+background:#1c1c3a;
+border-radius:12px;
+overflow:hidden;
+cursor:pointer;
+transition:0.3s;
+font-size:14px;
+}
+
+.card:hover{transform:scale(1.03)}
+
+.card img{
+width:100%;
+height:120px;
+object-fit:cover;
+}
+
+.info{padding:8px}
+.price{color:#8b5cf6;font-weight:bold}
+
+/* WHATSAPP */
+.whatsapp{
+position:fixed;
+bottom:15px;
+right:15px;
+background:#25D366;
+padding:12px 14px;
+border-radius:50%;
+font-size:22px;
+text-decoration:none;
+color:#fff;
+}
+
+/* POPUP */
+.popup{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.8);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.popup-box{
+background:#1c1c3a;
+padding:20px;
+border-radius:12px;
+width:300px;
+}
+
+/* ADMIN BUTTON */
+.admin-btn{
+position:fixed;
+bottom:15px;
+left:15px;
+background:#8b5cf6;
+padding:10px;
+border-radius:10px;
+cursor:pointer;
+}
+
+/* ADMIN PANEL */
+.panel{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.9);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.panel-box{
+background:#1c1c3a;
+padding:20px;
+border-radius:12px;
+width:320px;
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin:5px 0;
+border-radius:8px;
+border:none;
+}
+
+button{
+width:100%;
+padding:10px;
+margin-top:8px;
+background:#8b5cf6;
+border:none;
+color:#fff;
+cursor:pointer;
+border-radius:8px;
+}
+
+.small{
+font-size:12px;
+color:#aaa;
+margin-top:5px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="logo" id="logo">Luxora</div>
+<div class="search"><input id="search" placeholder="بحث..."></div>
+</header>
+
+<div class="products" id="products"></div>
+
+<!-- WHATSAPP -->
+<a class="whatsapp" href="https://wa.me/393510798667" target="_blank">💬</a>
+
+<!-- POPUP -->
+<div class="popup" id="popup">
+<div class="popup-box">
+<h3 id="pname"></h3>
+<p id="pprice"></p>
+<button onclick="closePopup()">إغلاق</button>
+</div>
+</div>
+
+<!-- ADMIN BUTTON -->
+<div class="admin-btn" onclick="openAdmin()">Admin</div>
+
+<!-- ADMIN PANEL -->
+<div class="panel" id="panel">
+<div class="panel-box">
+<h3>Admin Panel</h3>
+
+<input id="name" placeholder="اسم المنتج">
+<input id="price" placeholder="الثمن €">
+
+<select id="cat">
+<option value="shoes">أحذية</option>
+<option value="clothes">ملابس</option>
+<option value="acc">إكسسوارات</option>
+</select>
+
+<input type="file" id="file" multiple>
+
+<button onclick="add()">➕ إضافة منتج</button>
+<button onclick="closeAdmin()">إغلاق</button>
+
+<p class="small">حذف أي منتج بالضغط عليه داخل المتجر</p>
+</div>
+</div>
+
+<script>
+
+let products = JSON.parse(localStorage.getItem("p")) || [];
+let clicks = 0;
+
+/* SECRET ADMIN 10 CLICKS */
+document.getElementById("logo").onclick = () => {
+clicks++;
+setTimeout(()=>clicks=0,3000);
+if(clicks>=10){
+document.getElementById("panel").style.display="flex";
+clicks=0;
+}
+}
+
+/* RENDER */
+function render(){
+let box = document.getElementById("products");
+box.innerHTML="";
+
+products.forEach((p,i)=>{
+box.innerHTML += `
+<div class="card" onclick="openP(${i})" ondblclick="del(${i})">
+<img src="${p.media[0]}">
+<div class="info">
+<div>${p.name}</div>
+<div class="price">${p.price} €</div>
+</div>
+</div>`;
+});
+}
+render();
+
+/* ADD PRODUCT */
+function add(){
+let name = document.getElementById("name").value;
+let price = document.getElementById("price").value;
+let cat = document.getElementById("cat").value;
+let files = document.getElementById("file").files;
+
+let media=[];
+
+if(files.length===0){
+alert("اختار صور");
+return;
+}
+
+for(let i=0;i<files.length;i++){
+let reader=new FileReader();
+
+reader.onload=e=>{
+media.push(e.target.result);
+
+if(media.length===files.length){
+products.push({name,price,cat,media});
+localStorage.setItem("p",JSON.stringify(products));
+render();
+}
+}
+reader.readAsDataURL(files[i]);
+}
+}
+
+/* DELETE PRODUCT */
+function del(i){
+if(confirm("حذف المنتج؟")){
+products.splice(i,1);
+localStorage.setItem("p",JSON.stringify(products));
+render();
+}
+}
+
+/* POPUP */
+function openP(i){
+document.getElementById("popup").style.display="flex";
+document.getElementById("pname").innerText=products[i].name;
+document.getElementById("pprice").innerText=products[i].price+" €";
+}
+
+function closePopup(){
+document.getElementById("popup").style.display="none";
+}
+
+/* ADMIN */
+function openAdmin(){
+let pass = prompt("Password:");
+if(pass==="200911"){
+document.getElementById("panel").style.display="flex";
+}else{
+alert("Wrong password");
+}
+}
+
+function closeAdmin(){
+document.getElementById("panel").style.display="none";
+}
+
+</script>
+
+</body>
+</html>
