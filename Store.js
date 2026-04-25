@@ -11,6 +11,6 @@ id: 2,
 name: "T-Shirt",
 price: "50€",
 cat: "clothes",
-media: ["https://example.com/shirt.jpg"]
+media: ["https://res.cloudinary.com/doqmnggtl/image/upload/f_auto,q_auto/IMG_1782_rz5sa5"]
 }
 ];
