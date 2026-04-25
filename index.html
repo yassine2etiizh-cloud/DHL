@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aldo Store IT</title>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:#0f0f23;
+color:#fff;
+}
+
+/* HEADER */
+header{
+text-align:center;
+padding:15px;
+background:#14142b;
+font-size:22px;
+font-weight:bold;
+color:#8b5cf6;
+}
+
+/* CATEGORIES */
+.cats{
+display:flex;
+justify-content:center;
+flex-wrap:wrap;
+gap:10px;
+padding:15px;
+}
+
+.cats button{
+padding:8px 14px;
+border-radius:25px;
+border:none;
+cursor:pointer;
+background:#2a2a50;
+color:#fff;
+font-size:12px;
+}
+
+.cats button.active{
+background:#8b5cf6;
+}
+
+/* GRID */
+.products{
+display:grid;
+grid-template-columns:repeat(4, 1fr);
+gap:10px;
+padding:15px;
+}
+
+/* CARD */
+.card{
+background:#1c1c3a;
+border-radius:12px;
+overflow:hidden;
+text-align:center;
+cursor:pointer;
+transition:0.3s;
+aspect-ratio:1/1.4;
+}
+
+.card:hover{
+transform:translateY(-5px);
+}
+
+/* IMAGE */
+.card img{
+width:100%;
+height:70%;
+object-fit:cover;
+}
+
+/* TEXT */
+.card h4{
+font-size:12px;
+margin:2px 0;
+font-weight:bold;
+}
+
+.card p{
+font-size:12px;
+margin:0;
+color:#8b5cf6;
+font-weight:bold;
+}
+
+/* POPUP */
+.popup{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.85);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.box{
+background:#1c1c3a;
+padding:20px;
+border-radius:12px;
+width:260px;
+text-align:center;
+}
+
+.box img{
+width:100%;
+border-radius:10px;
+margin-bottom:10px;
+}
+
+/* WHATSAPP */
+.wa-btn{
+display:block;
+background:#25D366;
+color:#fff;
+padding:10px;
+border-radius:8px;
+text-decoration:none;
+margin-top:10px;
+font-weight:bold;
+}
+
+/* FLOAT WA */
+.float-wa{
+position:fixed;
+bottom:80px;
+left:20px;
+background:#25D366;
+padding:12px 14px;
+border-radius:50px;
+color:#fff;
+text-decoration:none;
+}
+
+/* ADMIN */
+.admin-btn{
+position:fixed;
+bottom:20px;
+left:20px;
+background:#8b5cf6;
+border:none;
+padding:10px;
+border-radius:10px;
+color:#fff;
+cursor:pointer;
+}
+
+.admin{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.9);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.admin-box{
+background:#1c1c3a;
+padding:20px;
+border-radius:12px;
+width:320px;
+}
+
+input,select{
+width:100%;
+padding:8px;
+margin:5px 0;
+border:none;
+border-radius:6px;
+}
+
+/* DELETE */
+.admin-item{
+display:flex;
+justify-content:space-between;
+align-items:center;
+background:#2a2a50;
+padding:8px;
+border-radius:8px;
+margin:5px 0;
+font-size:12px;
+}
+
+.admin-item img{
+width:40px;
+height:40px;
+object-fit:cover;
+border-radius:6px;
+}
+
+.admin-item button{
+background:red;
+border:none;
+color:#fff;
+padding:5px 8px;
+border-radius:6px;
+cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>Aldo_footlocker</header>
+
+<!-- CATEGORIES -->
+<div class="cats">
+<button class="active" onclick="filter('all',this)">Tutto</button>
+<button onclick="filter('clothes',this)">👕 vestiti</button>
+<button onclick="filter('shoes',this)">👟 Scarpe</button>
+<button onclick="filter('acc',this)">💍 Accessori</button>
+<button onclick="filter('perfume',this)">🌹 Profumi</button>
+<button onclick="filter('imborsi',this)">💼 rimborsi</button>
+</div>
+
+<!-- PRODUCTS -->
+<div class="products" id="products"></div>
+
+<!-- POPUP -->
+<div class="popup" id="popup">
+<div class="box">
+<h3 id="pname"></h3>
+<p id="pprice"></p>
+<img id="pimg">
+
+<a id="waLink" class="wa-btn" target="_blank">📲 Order</a>
+<button onclick="closeP()">Chiudi</button>
+</div>
+</div>
+
+<!-- FLOAT WA -->
+<a class="float-wa" href="https://wa.me/393510798667" target="_blank">💬 WhatsApp</a>
+
+<!-- ADMIN -->
+<button class="admin-btn" onclick="openAdmin()">Admin</button>
+
+<div class="admin" id="admin">
+<div class="admin-box">
+
+<h3>Add Product</h3>
+
+<input id="name" placeholder="Name">
+<input id="price" placeholder="Price">
+
+<select id="cat">
+<option value="shoes">Shoes</option>
+<option value="clothes">Clothes</option>
+<option value="acc">Acc</option>
+<option value="perfume">Perfume</option>
+<option value="imborsi">Imborsi</option>
+</select>
+
+<input type="file" id="files" multiple>
+
+<button onclick="add()">Add</button>
+
+<hr>
+<h3>Delete Products</h3>
+<div id="adminList"></div>
+
+<button onclick="closeAdmin()">Close</button>
+
+</div>
+</div>
+
+<script>
+
+/* 🔥 DEMO PRODUCTS (10 items) */
+let products = JSON.parse(localStorage.getItem("p")) || [];
+
+if(products.length === 0){
+
+products = [
+{name:"Nike Air Force",price:"120€",cat:"shoes",media:["https://images.unsplash.com/photo-1606813907291-d86efa9b94db"]},
+{name:"Adidas Hoodie",price:"80€",cat:"clothes",media:["https://images.unsplash.com/photo-1521572163474-6864f9cf17ab"]},
+{name:"Rolex Watch",price:"250€",cat:"acc",media:["https://images.unsplash.com/photo-1523275335684-37898b6baf30"]},
+{name:"Dior Sauvage",price:"95€",cat:"perfume",media:["https://images.unsplash.com/photo-1615634260167-c8cdede054de"]},
+{name:"Nike Jordan",price:"150€",cat:"shoes",media:["https://images.unsplash.com/photo-1600185365483-26d7a4cc7519"]},
+{name:"Gucci Bag",price:"300€",cat:"acc",media:["https://images.unsplash.com/photo-1591561954557-26941169b49e"]},
+{name:"Zara Jacket",price:"70€",cat:"clothes",media:["https://images.unsplash.com/photo-1520975922284-9b6c3f8b0c3d"]},
+{name:"Versace Perfume",price:"110€",cat:"perfume",media:["https://images.unsplash.com/photo-1615634260167-c8cdede054de"]},
+{name:"Nike Cap",price:"25€",cat:"acc",media:["https://images.unsplash.com/photo-1520975922284-9b6c3f8b0c3d"]},
+{name:"Puma Shoes",price:"90€",cat:"shoes",media:["https://images.unsplash.com/photo-1606813907291-d86efa9b94db"]}
+];
+
+localStorage.setItem("p", JSON.stringify(products));
+}
+
+let current="all";
+
+/* RENDER */
+function render(){
+let box=document.getElementById("products");
+box.innerHTML="";
+
+products
+.filter(p=>current==="all"||p.cat===current)
+.forEach((p,i)=>{
+
+box.innerHTML+=`
+<div class="card" onclick="openP(${i})">
+<img src="${p.media[0]}">
+<h4>${p.name}</h4>
+<p>${p.price}</p>
+</div>
+`;
+});
+}
+
+/* FILTER */
+function filter(c,btn){
+current=c;
+document.querySelectorAll(".cats button").forEach(b=>b.classList.remove("active"));
+btn.classList.add("active");
+render();
+}
+
+/* POPUP */
+function openP(i){
+let p=products[i];
+
+document.getElementById("popup").style.display="flex";
+document.getElementById("pname").innerText=p.name;
+document.getElementById("pprice").innerText=p.price;
+document.getElementById("pimg").src=p.media[0];
+
+document.getElementById("waLink").href=
+`https://wa.me/393510798667?text=${encodeURIComponent("I want: "+p.name+" - "+p.price)}`;
+}
+
+function closeP(){
+document.getElementById("popup").style.display="none";
+}
+
+/* ADMIN */
+function openAdmin(){
+let pass=prompt("Password:");
+if(pass==="200911"){
+document.getElementById("admin").style.display="flex";
+renderAdmin();
+}
+}
+
+function closeAdmin(){
+document.getElementById("admin").style.display="none";
+}
+
+/* ADD */
+function add(){
+let name=document.getElementById("name").value;
+let price=document.getElementById("price").value;
+let cat=document.getElementById("cat").value;
+let files=document.getElementById("files").files;
+
+let media=[];
+let loaded=0;
+
+for(let i=0;i<files.length;i++){
+let reader=new FileReader();
+
+reader.onload=e=>{
+media.push(e.target.result);
+loaded++;
+
+if(loaded===files.length){
+products.push({name,price,cat,media});
+localStorage.setItem("p",JSON.stringify(products));
+render();
+renderAdmin();
+closeAdmin();
+}
+};
+
+reader.readAsDataURL(files[i]);
+}
+}
+
+/* DELETE */
+function renderAdmin(){
+let box=document.getElementById("adminList");
+box.innerHTML="";
+
+products.forEach((p,i)=>{
+box.innerHTML+=`
+<div class="admin-item">
+<div style="display:flex;gap:10px;align-items:center;">
+<img src="${p.media[0]}">
+<span>${p.name}</span>
+</div>
+<button onclick="delProduct(${i})">❌</button>
+</div>
+`;
+});
+}
+
+function delProduct(i){
+if(confirm("Delete product?")){
+products.splice(i,1);
+localStorage.setItem("p",JSON.stringify(products));
+render();
+renderAdmin();
+}
+}
+
+render();
+
+</script>
+
+</body>
+</html>
