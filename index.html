@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luxora Shop</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+
+body{
+background:#0f0f23;
+color:#fff;
+}
+
+/* HEADER */
+header{
+background:#14142b;
+padding:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+position:sticky;
+top:0;
+}
+
+.logo{font-size:22px;font-weight:bold;cursor:pointer}
+
+.search input{
+padding:10px;
+border-radius:10px;
+border:none;
+outline:none;
+}
+
+/* PRODUCTS GRID 4 SMALL */
+.products{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:10px;
+padding:15px;
+}
+
+@media(max-width:900px){
+.products{grid-template-columns:repeat(2,1fr);}
+}
+
+@media(max-width:500px){
+.products{grid-template-columns:repeat(2,1fr);}
+}
+
+/* CARD SMALL */
+.card{
+background:#1c1c3a;
+border-radius:12px;
+overflow:hidden;
+cursor:pointer;
+transition:0.3s;
+}
+
+.card:hover{
+transform:scale(1.03);
+}
+
+.card img,
+.card video{
+width:100%;
+height:140px;
+object-fit:cover;
+}
+
+.info{
+padding:8px;
+font-size:14px;
+}
+
+.price{
+color:#8b5cf6;
+font-weight:bold;
+font-size:14px;
+}
+
+/* POPUP */
+.popup{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.8);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.popup-box{
+background:#1c1c3a;
+padding:20px;
+border-radius:15px;
+width:300px;
+text-align:center;
+}
+
+/* ADMIN BUTTON */
+.admin-btn{
+position:fixed;
+bottom:20px;
+left:20px;
+background:#8b5cf6;
+padding:12px;
+border-radius:10px;
+cursor:pointer;
+}
+
+/* ADMIN PANEL */
+.panel{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.9);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.panel-box{
+background:#1c1c3a;
+padding:20px;
+border-radius:15px;
+width:350px;
+max-height:90vh;
+overflow:auto;
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin:5px 0;
+border-radius:8px;
+border:none;
+}
+
+button{
+padding:10px;
+width:100%;
+margin-top:10px;
+background:#8b5cf6;
+color:#fff;
+border:none;
+cursor:pointer;
+border-radius:8px;
+}
+
+/* ADMIN ITEMS */
+.admin-item{
+background:#2a2a4a;
+padding:10px;
+border-radius:10px;
+margin-top:10px;
+}
+
+.media-box{
+display:flex;
+gap:5px;
+flex-wrap:wrap;
+margin-top:10px;
+}
+
+.media-box img,
+.media-box video{
+width:60px;
+height:60px;
+object-fit:cover;
+border-radius:6px;
+}
+
+.del-img{
+position:absolute;
+background:red;
+color:#fff;
+border:none;
+border-radius:50%;
+font-size:10px;
+cursor:pointer;
+}
+
+.whatsapp{
+position:fixed;
+bottom:20px;
+right:20px;
+background:#25D366;
+padding:12px;
+border-radius:50%;
+text-decoration:none;
+color:#fff;
+font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="logo" id="logo">Luxora</div>
+<div class="search"><input placeholder="بحث..."></div>
+</header>
+
+<div class="products" id="products"></div>
+
+<!-- POPUP -->
+<div class="popup" id="popup">
+<div class="popup-box">
+<h3 id="pname"></h3>
+<p id="pprice"></p>
+<button onclick="closePopup()">Close</button>
+</div>
+</div>
+
+<!-- ADMIN BUTTON -->
+<div class="admin-btn" onclick="openAdmin()">Admin</div>
+
+<!-- ADMIN PANEL -->
+<div class="panel" id="panel">
+<div class="panel-box">
+
+<h3>Admin Panel</h3>
+
+<input id="name" placeholder="اسم المنتج">
+<input id="price" placeholder="السعر">
+
+<select id="cat">
+<option value="clothes">ملابس</option>
+<option value="shoes">أحذية</option>
+<option value="accessories">أكسسوارات</option>
+</select>
+
+<input type="file" id="file" multiple>
+
+<button onclick="add()">➕ إضافة المنتج</button>
+<button onclick="closeAdmin()">إغلاق</button>
+
+<hr>
+
+<div id="adminList"></div>
+
+</div>
+</div>
+
+<a class="whatsapp" href="https://wa.me/qr/WHVT75K5O3M2D1">💬</a>
+
+<script>
+
+let products = JSON.parse(localStorage.getItem("p")) || [];
+
+/* RENDER PRODUCTS */
+function render(){
+let box=document.getElementById("products");
+box.innerHTML="";
+
+products.forEach((p,i)=>{
+let m=p.media[0];
+
+box.innerHTML+=`
+<div class="card" onclick="openP(${i})">
+${m.includes("video")
+? `<video src="${m}" controls></video>`
+: `<img src="${m}">`}
+<div class="info">
+<h3>${p.name}</h3>
+<p class="price">${p.price} €</p>
+</div>
+</div>`;
+});
+}
+render();
+
+/* ADD PRODUCT */
+function add(){
+let name=document.getElementById("name").value;
+let price=document.getElementById("price").value;
+let cat=document.getElementById("cat").value;
+let files=document.getElementById("file").files;
+
+let media=[];
+
+for(let i=0;i<files.length;i++){
+let reader=new FileReader();
+
+reader.onload=e=>{
+media.push(e.target.result);
+
+if(media.length===files.length){
+products.push({name,price,cat,media});
+localStorage.setItem("p",JSON.stringify(products));
+render();
+renderAdmin();
+}
+};
+
+reader.readAsDataURL(files[i]);
+}
+}
+
+/* POPUP */
+function openP(i){
+document.getElementById("popup").style.display="flex";
+document.getElementById("pname").innerText=products[i].name;
+document.getElementById("pprice").innerText=products[i].price+" €";
+}
+
+function closePopup(){
+document.getElementById("popup").style.display="none";
+}
+
+/* ADMIN */
+function openAdmin(){
+let pass=prompt("Password:");
+if(pass==="200911"){
+document.getElementById("panel").style.display="flex";
+renderAdmin();
+}else{
+alert("Wrong password");
+}
+}
+
+function closeAdmin(){
+document.getElementById("panel").style.display="none";
+}
+
+/* DELETE PRODUCT */
+function deleteProduct(i){
+products.splice(i,1);
+localStorage.setItem("p",JSON.stringify(products));
+render();
+renderAdmin();
+}
+
+/* DELETE IMAGE */
+function deleteImage(pi,mi){
+products[pi].media.splice(mi,1);
+
+if(products[pi].media.length===0){
+products.splice(pi,1);
+}
+
+localStorage.setItem("p",JSON.stringify(products));
+render();
+renderAdmin();
+}
+
+/* ADMIN LIST */
+function renderAdmin(){
+let box=document.getElementById("adminList");
+box.innerHTML="";
+
+products.forEach((p,i)=>{
+box.innerHTML+=`
+<div class="admin-item">
+
+<h4>${p.name}</h4>
+<p>${p.price} €</p>
+
+<div class="media-box">
+${p.media.map((m,mi)=>`
+<div style="position:relative">
+${m.includes("video")
+? `<video src="${m}"></video>`
+: `<img src="${m}">`}
+
+<button class="del-img" onclick="deleteImage(${i},${mi})">x</button>
+</div>
+`).join("")}
+</div>
+
+<button onclick="deleteProduct(${i})" style="background:red">
+🗑 حذف المنتج
+</button>
+
+</div>
+`;
+});
+}
+
+</script>
+
+</body>
+</html>
